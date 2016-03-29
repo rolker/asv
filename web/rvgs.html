@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="initial-scale=1.0">
+<title>Hello ASV!</title>
+<style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 100%;
+      }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script>
+      var map;
+      var mapFeatures;
+      var shipPosition =  {lat: 43.135885, lng: -70.93917333333333}
+
+      function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: shipPosition,
+          zoom: 14,
+          mapTypeControlOptions: {
+            fullscreenControl: true
+          }
+        });
+
+        var centerControlDiv = document.createElement('div');
+        var centerControl = new CenterControl(centerControlDiv, map);
+
+        centerControlDiv.index = 1;
+        map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
+
+        getStatus();
+      }
+
+      function CenterControl(controlDiv, map) {
+
+        // Set CSS for the control border.
+        var controlUI = document.createElement('div');
+        controlUI.style.backgroundColor = '#fff';
+        controlUI.style.border = '2px solid #fff';
+        controlUI.style.borderRadius = '3px';
+        controlUI.style.boxShadow = '0 2px 6px rgba(0,0,0,.3)';
+        controlUI.style.cursor = 'pointer';
+        controlUI.style.marginBottom = '22px';
+        controlUI.style.textAlign = 'center';
+        controlUI.title = 'Click to recenter the map';
+        controlDiv.appendChild(controlUI);
+
+        // Set CSS for the control interior.
+        var controlText = document.createElement('div');
+        controlText.style.color = 'rgb(25,25,25)';
+        controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
+        controlText.style.fontSize = '16px';
+        controlText.style.lineHeight = '38px';
+        controlText.style.paddingLeft = '5px';
+        controlText.style.paddingRight = '5px';
+        controlText.innerHTML = 'Center Map';
+        controlUI.appendChild(controlText);
+
+        // Setup the click event listeners: simply set the map to Chicago.
+        controlUI.addEventListener('click', function() {
+            map.setCenter(shipPosition);
+        });
+
+      }
+
+
+      function statusUpdate(){
+        //console.log(this.responseText);
+        window.setTimeout(getStatus,10000);
+
+        geoJSON = JSON.parse(this.responseText);
+
+        var lastPos = geoJSON.features[0].geometry.coordinates[geoJSON.features[0].geometry.coordinates.length-1];
+        shipPosition =  {lat: lastPos[1], lng: lastPos[0]};
+
+        if (mapFeatures != null) {
+            for (var i = 0; i < mapFeatures.length; i++) {
+                map.data.remove(mapFeatures[i]);
+            }
+        }
+        mapFeatures=map.data.addGeoJson(geoJSON);
+
+      }
+
+      function getStatus(){
+          var statusRequest = new XMLHttpRequest();
+          statusRequest.addEventListener("load",statusUpdate);
+          //statusRequest.open("GET", "ccom_test.json");
+          statusRequest.open("GET", "latest.json");
+          statusRequest.send();
+      }
+
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?callback=initMap"
+    async defer></script>
+</body>
+
+</html>
