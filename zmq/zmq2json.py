@@ -32,7 +32,7 @@ while True:
         print message.strip()
         s = nmea.Sentence(message)
         status.addSentence(s)
-        if s.type == 'GGA':
+        if s.type == 'GGA' and status.latitude is not None:
             #open(outfile,'w').write(str(status))
             open(outfile,'w').write(status.getGeoJson())
 
