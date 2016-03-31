@@ -136,10 +136,13 @@ class Status:
                     if self.startTime is None:
                         self.startTime = currentdt
                     deltaTime = currentdt-self.startTime
+                    sog = self.sog
+                    if sog is None:
+                        sog = 0
                     if sd['valid']:
                         self.latitude = sd['latitude']
                         self.longitude = sd['longitude']
-                        self.trackHistory.append((self.longitude,self.latitude,0,deltaTime.total_seconds()))
+                        self.trackHistory.append((self.longitude,self.latitude,0,deltaTime.total_seconds(),sog))
             if s.type == 'HDT':
                 self.heading = sd['heading']
             if s.type == 'VTG':
