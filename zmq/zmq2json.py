@@ -3,6 +3,7 @@
 import zmq
 import nmea
 import sys
+import datetime
 
 inconnection = 'tcp://graywhale:7778'
 #topic = 'TEST_123'
@@ -10,6 +11,7 @@ inconnection = 'tcp://graywhale:7778'
 topic = 'RVGS_GPS_01'
 outfile = '../web/latest.json'
 infile = None
+lastTime = None
 
 if len(sys.argv) > 1:
     infile = open(sys.argv[1])
@@ -33,6 +35,9 @@ while True:
         s = nmea.Sentence(message)
         status.addSentence(s)
         if s.type == 'GGA' and status.latitude is not None:
-            #open(outfile,'w').write(str(status))
-            open(outfile,'w').write(status.getGeoJson())
+            now = datetime.datetime.utcnow()
+            if lastTime is None or (now - lastTime).total_seconds() > 1:
+                #open(outfile,'w').write(str(status))
+                open(outfile,'w').write(status.getGeoJson())
+                lastTime = now
 
