@@ -1,27 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="initial-scale=1.0">
-<title>RV Gulf Surveyor</title>
-<style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="initial-scale=1.0">
+    <title>RV Gulf Surveyor</title>
+    <style>
       html, body {
         height: 100%;
         margin: 0;
         padding: 0;
       }
       #map {
-        height: 100%;
+        height: 80%;
       }
     </style>
 </head>
 
 <body>
     <div id="map"></div>
+    <div id="chart"></div>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script>
+      var mapReady = false;
+      var chartReady = false;
       var map;
       var mapFeatures;
       var shipPosition =  {lat: 43.135885, lng: -70.93917333333333}
+
+      google.charts.load('current', {packages: ['corechart']});
+      google.charts.setOnLoadCallback(initChart);
+
+      function initChart() {
+        chartReady = true;
+        if(mapReady)
+            getStatus();
+      }
 
       function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
@@ -38,7 +51,9 @@
         centerControlDiv.index = 1;
         map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
 
-        getStatus();
+        mapReady = true;
+        if(chartReady)
+            getStatus();
       }
 
       function CenterControl(controlDiv, map) {
@@ -78,7 +93,7 @@
         //console.log(this.responseText);
         window.setTimeout(getStatus,10000);
 
-        geoJSON = JSON.parse(this.responseText);
+        var geoJSON = JSON.parse(this.responseText);
 
         var lastPos = geoJSON.features[0].geometry.coordinates[geoJSON.features[0].geometry.coordinates.length-1];
         shipPosition =  {lat: lastPos[1], lng: lastPos[0]};
@@ -89,6 +104,7 @@
             }
         }
         mapFeatures=map.data.addGeoJson(geoJSON);
+        drawChart(geoJSON);
 
       }
 
@@ -98,6 +114,22 @@
           //statusRequest.open("GET", "ccom_test.json");
           statusRequest.open("GET", "latest.json");
           statusRequest.send();
+      }
+
+      function drawChart(geo) {
+        // Define the chart to be drawn.
+        var t = new Date(geo.features[0].properties.referenceTime)
+        var data = new google.visualization.DataTable();
+        data.addColumn('datetime', 'Time');
+        data.addColumn('number', 'Speed');
+        for(var i = 0; i < geo.features[0].geometry.coordinates.length; i++){
+            var ct = new Date(t.valueOf()+geo.features[0].geometry.coordinates[i][3]*1000);
+            data.addRow([ct,geo.features[0].geometry.coordinates[i][4]]);
+        }
+
+        // Instantiate and draw the chart.
+        var chart = new google.visualization.LineChart(document.getElementById('chart'));
+        chart.draw(data, null);
       }
 
     </script>

@@ -111,7 +111,8 @@ class Sentence:
         return lat,lon
 
 class Status:
-    def __init__(self):
+    def __init__(self,id='gps'):
+        self.id = id
         self.date = None
         self.time = None
         self.latitude = None
@@ -120,6 +121,7 @@ class Status:
         self.heading = None
         self.trackHistory = []
         self.startTime = None
+        self.lastTime = None
 
     def addSentence(self,s):
         if s.type in ('ZDA','HDT','GGA','VTG','RMC'):
@@ -133,6 +135,7 @@ class Status:
                 self.time = sd['time']
                 if self.date is not None:
                     currentdt = datetime.datetime.combine(self.date,self.time)
+                    self.lastTime = currentdt
                     if self.startTime is None:
                         self.startTime = currentdt
                     deltaTime = currentdt-self.startTime
@@ -170,3 +173,10 @@ class Status:
         pf = geojson.Feature(geometry=p)
         fc = geojson.FeatureCollection([lsf,pf])
         return geojson.dumps(fc)
+    
+    def getCZML(self):
+        ret = {'id':self.id}
+        ret['position']={}
+        ret['position']['epoch'] = self.startTime.isoformat()
+        ret['position']['cartographicDegrees'] = [(self.lastTime-self.startTime).total_seconds(),self.longitude,self.latitude,0.0]
+        return json.dumps(ret)
